@@ -11,6 +11,8 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:core';
 
+import 'package:yandex_mobileads/mobile_ads.dart';
+
 class StartPage extends StatefulWidget {
   StartPage({Key? key}) : super(key: key);
 
@@ -51,13 +53,100 @@ class _StartPageState extends State<StartPage> with TickerProviderStateMixin{
         _start = true;
         requestNewScreen("<start>");
       }
+    _showAdIfAvailable();
+  }
+
+  //final _adUnitId = 'demo-appopenad-yandex';
+  final _adUnitId = 'R-M-3449352-1';
+  late var _adRequestConfiguration = AdRequestConfiguration(adUnitId: _adUnitId);
+  AppOpenAd? _appOpenAd;
+  late final Future<AppOpenAdLoader> _appOpenAdLoader = _createAppOpenAdLoader();
+
+  static var isAdShowing = false;
+
+  Future<AppOpenAdLoader> _createAppOpenAdLoader() {
+      return AppOpenAdLoader.create(
+          onAdLoaded: (AppOpenAd appOpenAd) {
+              // The ad was loaded successfully. Now you can handle it.
+              _appOpenAd = appOpenAd;
+          },
+          onAdFailedToLoad: (error) {
+              // Ad failed for to load with error
+              // Attempting to load a new ad from the OnAdFailedToLoad event is strongly discouraged.
+          },
+      );
   }
 
   @override
   void initState() {
     startElementsList();
     super.initState();
+    // Configure the user privacy data policy before init sdk
+    MobileAds.initialize();
+    _loadAppOpenAd();
   }
+
+  Future<void> _loadAppOpenAd() async {
+      final adLoader = await _appOpenAdLoader;
+      await adLoader.loadAd(adRequestConfiguration: _adRequestConfiguration);
+  }
+
+  // @override
+  // void didChangeAppLifecycleState(AppLifecycleState state) {
+  //     if (state == AppLifecycleState.resumed) {
+  //         _showAdIfAvailable();
+  //     }
+  // }
+
+  void _setAdEventListener({required AppOpenAd appOpenAd }) {
+      appOpenAd.setAdEventListener(
+          eventListener: AppOpenAdEventListener(
+              onAdShown: () {
+                  // Called when an ad is shown.
+                  isAdShowing = true;
+              }, 
+              onAdFailedToShow: (error) {
+                  // Called when an ad failed to show.
+
+                  // Clear resources after Ad dismissed.
+                  _clearAppOpenAd();
+                  // Now you can preload the next ad.
+                  _loadAppOpenAd();
+              }, 
+              onAdDismissed: () {
+                  // Called when an ad is dismissed.
+                  isAdShowing = false;
+
+                  // Clear resources.
+                  _clearAppOpenAd();
+                  // Now you can preload the next ad.
+                  _loadAppOpenAd();
+              }, 
+              onAdClicked: () {
+                  // Called when a click is recorded for an ad.
+              }, 
+              onAdImpression: (data) {
+                  // Called when an impression is recorded for an ad.
+              }
+          )
+      );
+  }
+
+  Future<void> _showAdIfAvailable() async {
+      var appOpenAd = _appOpenAd;
+      if (appOpenAd != null && !isAdShowing) {
+          _setAdEventListener(appOpenAd: appOpenAd);
+          await appOpenAd.show();
+          await appOpenAd.waitForDismiss();
+      } else {
+          _loadAppOpenAd();
+      }
+  }
+
+  void _clearAppOpenAd() {
+        _appOpenAd?.destroy();
+        _appOpenAd = null;
+    }
 
   startElementsList() async {
     limit = [0, limit_step];

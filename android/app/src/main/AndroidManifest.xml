@@ -1,10 +1,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ru.dragmetal.radio.dragmetal_app">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+
    <application
         android:label="Драгметаллы в радиодеталях"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        
+        <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9393360339803147~7011111468"/>
+        
+        <!-- Disable the use of child's personal data for app monetization.  -->
+        <meta-data
+          android:name="@string/yandex_mobileads_age_restricted_user"
+          android:value="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

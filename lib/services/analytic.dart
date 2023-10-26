@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 requestNewScreen(page) async{
   String appName = "dragmetall app";
   page = page.toLowerCase();
-  String version = "1";
+  String version = "2";
   appName = "$appName;$version";
   String userId = await StorageManager.readDataList("userId");
   String sessionId = await StorageManager.readDataList("sessionId");
